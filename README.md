@@ -1,13 +1,15 @@
 # PainelAeroporto
 
 # Para a pasta BackPainel usar o comando :
-npm run start:dev
+> npm run start:dev
 
 # Para a pasta "painel" usar o comando :
-npm start
+> npm start
 
 
 
 
-*Não usar a pasta FontPainel*
-*Não esquecer de usar o "npm i" em ambas, isso antes de qualquer outro npm* 
+*Não usar a pasta FontPainel*  \<br/>
+*Não esquecer de usar o "npm i" em ambas, isso antes de qualquer outro npm*  \<br/>
+
+**Teminal.c está na pasta BackPainel**
