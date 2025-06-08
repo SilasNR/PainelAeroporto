@@ -10,6 +10,6 @@
 
 
 *Não usar a pasta FontPainel*  
-*Não esquecer de usar o "npm i" em ambas, isso antes de qualquer outro npm*  \<br/>
+*Não esquecer de usar o "npm i" em ambas, isso antes de qualquer outro npm*  
 
 **Teminal.c está na pasta BackPainel**
