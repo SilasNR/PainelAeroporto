@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { spawn } = require('child_process');
 const path = require('path');
+const iconv = require('iconv-lite'); // <-- Biblioteca para decodificar corretamente
 
 const app = express();
 app.use(cors());
@@ -9,47 +10,28 @@ app.use(express.json());
 
 // Função para interpretar a saída da opção 2 (listar voos)
 function parseVoos(text) {
-  const lines = text.split('\n');
-  const voos = [];
-  let startParsing = false;
-
-  for (let line of lines) {
-    if (line.includes('VOO') && line.includes('COMPANHIA')) {
-      startParsing = true;
-      continue;
-    }
-    if (!startParsing || line.trim() === '' || line.includes('---')) continue;
-
-    const voo = {
-      voo: parseInt(line.slice(0, 5).trim()),
-      companhia: line.slice(6, 18).trim(),
-      destino: line.slice(18, 34).trim(),
-      portao: line.slice(34, 42).trim(),
-      hora: line.slice(42, 48).trim(),
-      observacao: line.slice(48).trim(),
-    };
-
-    if (!isNaN(voo.voo)) {
-      voos.push(voo);
-    }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('Erro ao fazer parse do JSON:', e.message);
+    return [];
   }
-
-  return voos;
 }
+
 
 // Rota GET para listar voos
 app.get('/listar-voos', (req, res) => {
   const terminalPath = path.join(__dirname, 'painel.exe');
-  const proc = spawn(terminalPath);
+  const proc = spawn(terminalPath, [], { stdio: ['pipe', 'pipe', 'pipe'], encoding: 'buffer' });
 
-  let output = '';
+  let output = Buffer.alloc(0);
 
   proc.stdout.on('data', (data) => {
-    output += data.toString();
+    output = Buffer.concat([output, data]);
   });
 
   proc.stderr.on('data', (data) => {
-    output += data.toString();
+    output = Buffer.concat([output, data]);
   });
 
   proc.on('error', (err) => {
@@ -58,7 +40,8 @@ app.get('/listar-voos', (req, res) => {
   });
 
   proc.on('close', () => {
-    const json = parseVoos(output);
+    const decoded = iconv.decode(output, 'windows-1252');
+    const json = parseVoos(decoded);
     res.json(json);
   });
 
@@ -73,15 +56,11 @@ app.get('/listar-voos', (req, res) => {
 // Rota POST para cadastrar voo
 app.post('/cadastrar-voo', (req, res) => {
   const {
-    origemCidade,
-    origemEstado,
-    destinoCidade,
-    destinoEstado,
     numeroVoo,
-    dataVoo,
-    horaVoo,
     companhia,
-    classe,
+    destino,
+    portao,
+    horaVoo,
     status
   } = req.body;
 
@@ -89,11 +68,11 @@ app.post('/cadastrar-voo', (req, res) => {
   const proc = spawn(terminalPath);
 
   proc.stdout.on('data', (data) => {
-    console.log('[stdout]', data.toString());
+    console.log('[stdout]', iconv.decode(data, 'windows-1252'));
   });
 
   proc.stderr.on('data', (data) => {
-    console.error('[stderr]', data.toString());
+    console.error('[stderr]', iconv.decode(data, 'windows-1252'));
   });
 
   proc.on('error', (err) => {
@@ -105,17 +84,15 @@ app.post('/cadastrar-voo', (req, res) => {
     res.status(200).send({ mensagem: 'Voo cadastrado com sucesso!' });
   });
 
-  // Envia dados simulando entrada do usuário
   setTimeout(() => {
-    proc.stdin.write('1\n'); // Ativa opção de cadastro
-
+    proc.stdin.write('1\n');
     proc.stdin.write(`${numeroVoo}\n`);
     proc.stdin.write(`${companhia}\n`);
-    proc.stdin.write(`${destinoCidade} - ${destinoEstado}\n`);
+    proc.stdin.write(`${destino}\n`);
+    proc.stdin.write(`${portao}\n`);
     proc.stdin.write(`${horaVoo}\n`);
     proc.stdin.write(`${status}\n`);
-
-    proc.stdin.write('5\n'); // Encerra
+    proc.stdin.write('5\n');
     proc.stdin.end();
   }, 500);
 });

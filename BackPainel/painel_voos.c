@@ -44,17 +44,24 @@ void listarVoos(Voo *lista)
 {
     if (lista == NULL)
     {
-        printf("Nenhum voo cadastrado.\n");
+        printf("[]\n");
         return;
     }
-    printf("\n%-5s %-12s %-15s %-8s %-6s %-20s\n", "VOO", "COMPANHIA", "DESTINO", "PORTÃO", "HORA", "OBSERVAÇÃO");
-    printf("--------------------------------------------------------------------------\n");
+
+    printf("[\n");
     while (lista != NULL)
     {
-        printf("%-5d %-12s %-15s %-8s %-6s %-20s\n",
+        printf("  {\"voo\": %d, \"companhia\": \"%s\", \"destino\": \"%s\", \"portao\": \"%s\", \"hora\": \"%s\", \"observacao\": \"%s\"}",
                lista->voo, lista->companhia, lista->destino, lista->portao, lista->hora, lista->observacao);
+
+        if (lista->prox != NULL)
+            printf(",\n");
+        else
+            printf("\n");
+
         lista = lista->prox;
     }
+    printf("]\n");
 }
 
 Voo *buscarVoo(Voo *lista, int numero)
